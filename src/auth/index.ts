@@ -480,6 +480,29 @@ export async function login(
       });
 
       await writeLoginState({ status: "success" });
+      // Service-Auswahl serverseitig setzen (Warenkorb-Aktionen brauchen diesen
+      // Session-Handshake; API: POST /api/marketselection/userselections).
+      try {
+        const { readSettings } = await import("../storage/index.js");
+        const store = await readSettings();
+        if (store) {
+          await page.evaluate(async (sel) => {
+            await fetch("/api/marketselection/userselections", {
+              method: "POST",
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(sel),
+            });
+          }, {
+            selectedService: "DELIVERY",
+            customerZipCode: store.zipCode,
+            wwIdent: store.wwIdent,
+          });
+          console.log(`  Service-Auswahl gesetzt: DELIVERY ${store.wwIdent} (${store.zipCode}).`);
+        }
+      } catch (e) {
+        console.log("  Service-Auswahl nicht gesetzt:", e instanceof Error ? e.message : e);
+      }
       console.log(`  Saved ${reweCookies.length} cookies to session.`);
 
       return "Login successful! Session cookies saved.";
