@@ -119,6 +119,7 @@ export class ReweApi {
     const params: Record<string, string | string[]> = {
       search: query,
       serviceTypes: SERVICE_TYPE,
+      market: this.store.wwIdent,
       objectsPerPage: String(opts.perPage ?? 40),
       page: String(opts.page ?? 1),
       debug: "false",
