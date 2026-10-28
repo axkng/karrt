@@ -105,7 +105,10 @@ export async function login(
   try {
     // ── Step 1: Navigate to login ──
     console.log("[1/5] Loading REWE login page...");
-    await page.goto("https://www.rewe.de/mydata/login", {
+    // /oauth2/authorization/sso (Spring-Security OAuth2 initiator) redirects to the
+    // Keycloak form with a valid state/nonce/PKCE challenge and passes the WAF that
+    // blocks /mydata/login (403/interstitial for automated browsers).
+    await page.goto("https://www.rewe.de/oauth2/authorization/sso", {
       waitUntil: "domcontentloaded",
       timeout: 60000,
     });
@@ -141,8 +144,8 @@ export async function login(
     const usernameField = page.locator("#username");
 
     const which = await Promise.race([
-      continueBtn.waitFor({ state: "visible", timeout: 20000 }).then(() => "continue" as const),
-      usernameField.waitFor({ state: "visible", timeout: 20000 }).then(() => "login" as const),
+      continueBtn.waitFor({ state: "visible", timeout: 240000 }).then(() => "continue" as const),
+      usernameField.waitFor({ state: "visible", timeout: 240000 }).then(() => "login" as const),
     ]).catch(() => "timeout" as const);
 
     if (which === "continue") {
